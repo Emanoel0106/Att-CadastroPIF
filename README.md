@@ -1,26 +1,29 @@
 # Att-CadastroPIF
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
-/
+// Estrutura para salvar os dados do cliente
+// Tenta abrir o arquivo para leitura e escrita binaria
+// Se nao existir, cria do zero inicializando 100 posicoes
+// Menu principal do sistema
+// Opcão 1: Cadastrar
+// Move o ponteiro para a posicao que o usuario escolheu
+// Ativa a conta
+// Volta para a posicao certa para sobrescrever o registro vazio
+// Opcao 2: Consultar
+// Garante que a busca comece do inicio do arquivo
+// Opcao 3: Atualizar Saldo
+// Opcao 4: Encerrar Conta (Remocao logica)
+// Opcao 5: Listar todos os clientes ativos
+// Opcao 6: Executar o rewind manual
+// Opcao 7: Sair do programa
+// Fecha o arquivo com seguranca
 
 #include <stdio.h>
 #include <stdlib.h>
 
-// Estrutura para salvar os dados do cliente
 struct Cliente {
     int conta;
     char nome[50];
     float saldo;
-    int ativo; // 1 para conta ativa, 0 para vazia/encerrada
+    int ativo;
 };
 
 int main(void) {
@@ -33,10 +36,8 @@ int main(void) {
     int encontrou;
     float novoSaldo;
 
-    // Tenta abrir o arquivo para leitura e escrita binaria
     arq = fopen("contas.dat", "r+b");
 
-    // Se nao existir, cria do zero inicializando 100 posicoes
     if (arq == NULL) {
         arq = fopen("contas.dat", "w+b");
         if (arq == NULL) {
@@ -53,7 +54,6 @@ int main(void) {
         }
     }
 
-    // Menu principal do sistema
     while (opcao != 7) {
         printf("\n===== MENU DE CONTAS =====\n");
         printf("1 - Cadastrar cliente\n");
@@ -66,12 +66,10 @@ int main(void) {
         printf("Escolha uma opcao: ");
         scanf("%d", &opcao);
 
-        // Opcão 1: Cadastrar
         if (opcao == 1) {
             printf("Digite a posicao desejada (0 a 99): ");
             scanf("%d", &posicao);
 
-            // Move o ponteiro para a posicao que o usuario escolheu
             fseek(arq, posicao * sizeof(struct Cliente), SEEK_SET);
             fread(&cliente, sizeof(struct Cliente), 1, arq);
 
@@ -81,13 +79,12 @@ int main(void) {
                 printf("Numero da conta: ");
                 scanf("%d", &cliente.conta);
                 printf("Nome do titular: ");
-                scanf("%s", cliente.nome); // Le apenas o primeiro nome (sem espacos)
+                scanf("%s", cliente.nome);
                 printf("Saldo inicial: ");
                 scanf("%f", &cliente.saldo);
                 
-                cliente.ativo = 1; // Ativa a conta
+                cliente.ativo = 1;
 
-                // Volta para a posicao certa para sobrescrever o registro vazio
                 fseek(arq, posicao * sizeof(struct Cliente), SEEK_SET);
                 fwrite(&cliente, sizeof(struct Cliente), 1, arq);
 
@@ -95,12 +92,11 @@ int main(void) {
             }
         }
 
-        // Opcao 2: Consultar
         else if (opcao == 2) {
             printf("Digite o numero da conta para busca: ");
             scanf("%d", &contaBusca);
 
-            rewind(arq); // Garante que a busca comece do inicio do arquivo
+            rewind(arq);
             encontrou = 0;
 
             while (fread(&cliente, sizeof(struct Cliente), 1, arq) == 1) {
@@ -110,7 +106,7 @@ int main(void) {
                     printf("Nome: %s\n", cliente.nome);
                     printf("Saldo: R$ %.2f\n", cliente.saldo);
                     encontrou = 1;
-                    break; // Ja achou, pode parar o laco
+                    break;
                 }
             }
 
@@ -119,14 +115,13 @@ int main(void) {
             }
         }
 
-        // Opcao 3: Atualizar Saldo
         else if (opcao == 3) {
             printf("Digite a conta que deseja alterar: ");
             scanf("%d", &contaBusca);
 
             rewind(arq);
             encontrou = 0;
-            posicao = 0; // Variavel para rastrear em qual registro estamos
+            posicao = 0;
 
             while (fread(&cliente, sizeof(struct Cliente), 1, arq) == 1) {
                 if (cliente.ativo == 1 && cliente.conta == contaBusca) {
@@ -136,12 +131,11 @@ int main(void) {
 
                     cliente.saldo = novoSaldo;
 
-                    // Posiciona exatamente no registro atual para atualizar
                     fseek(arq, posicao * sizeof(struct Cliente), SEEK_SET);
                     fwrite(&cliente, sizeof(struct Cliente), 1, arq);
 
                     encontrou = 1;
-                    printf("Saldo atualizado com sucesso!\n");
+                    printf("Saldo updated com sucesso!\n");
                     break;
                 }
                 posicao++;
@@ -152,7 +146,6 @@ int main(void) {
             }
         }
 
-        // Opcao 4: Encerrar Conta (Remocao logica)
         else if (opcao == 4) {
             printf("Digite a conta que deseja fechar: ");
             scanf("%d", &contaBusca);
@@ -163,7 +156,7 @@ int main(void) {
 
             while (fread(&cliente, sizeof(struct Cliente), 1, arq) == 1) {
                 if (cliente.ativo == 1 && cliente.conta == contaBusca) {
-                    cliente.ativo = 0; // Desativa a conta mas mantem o espaco reservado
+                    cliente.ativo = 0;
 
                     fseek(arq, posicao * sizeof(struct Cliente), SEEK_SET);
                     fwrite(&cliente, sizeof(struct Cliente), 1, arq);
@@ -180,10 +173,9 @@ int main(void) {
             }
         }
 
-        // Opcao 5: Listar todos os clientes ativos
         else if (opcao == 5) {
             printf("\n--- LISTAGEM DE CLIENTES ATIVOS ---\n");
-            rewind(arq); // Adicionado para evitar listar vazio caso o ponteiro estivesse no fim
+            rewind(arq);
             encontrou = 0;
             posicao = 0;
 
@@ -200,13 +192,11 @@ int main(void) {
             }
         }
 
-        // Opcao 6: Executar o rewind manual solicitado pelo professor
         else if (opcao == 6) {
             rewind(arq);
             printf("Ponteiro do arquivo resetado para o inicio (Posicao 0)!\n");
         }
 
-        // Opcao 7: Sair do programa
         else if (opcao == 7) {
             printf("Fechando arquivos e finalizando o programa...\n");
         }
@@ -216,6 +206,6 @@ int main(void) {
         }
     }
 
-    fclose(arq); // Fecha o arquivo com seguranca
+    fclose(arq);
     return 0;
 }
